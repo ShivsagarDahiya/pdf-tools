@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useGetProfile, useUpdateProfile } from "@/hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import { Camera, Check, Loader2, LogIn, Shield, User } from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,6 +15,7 @@ export function ProfilePage() {
   const { identity, login, isLoggingIn } = useInternetIdentity();
   const principalStr = identity?.getPrincipal().toString();
 
+  const queryClient = useQueryClient();
   const { data: profile, isLoading: isProfileLoading } = useGetProfile();
   const { mutate: updateProfile, isPending: isSaving } = useUpdateProfile();
 
@@ -61,6 +63,7 @@ export function ProfilePage() {
         onSuccess: () => {
           setSaved(true);
           toast.success("Profile saved successfully!");
+          queryClient.invalidateQueries({ queryKey: ["userProfile"] });
           setTimeout(() => setSaved(false), 3000);
         },
         onError: () => {
@@ -68,7 +71,7 @@ export function ProfilePage() {
         },
       },
     );
-  }, [displayName, profilePicUrl, updateProfile]);
+  }, [displayName, profilePicUrl, updateProfile, queryClient]);
 
   // Derive initials from display name or principal
   const initials = displayName

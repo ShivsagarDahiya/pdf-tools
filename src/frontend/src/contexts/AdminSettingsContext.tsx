@@ -1,3 +1,4 @@
+import { useActor } from "@/hooks/useActor";
 import type React from "react";
 import {
   createContext,
@@ -31,6 +32,11 @@ export interface AdminSettings {
   footerLinks: FooterLink[];
   footerCopyright: string;
   sponsorPosts: SponsorPost[];
+  toolControlFreeMaxMB?: number;
+  toolControlPlusMaxMB?: number;
+  toolControlGlobalWatermark?: boolean;
+  toolControlWatermarkText?: string;
+  toolControlDisabledTools?: string[];
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -48,6 +54,11 @@ const DEFAULT_SETTINGS: AdminSettings = {
   ],
   footerCopyright: "",
   sponsorPosts: [],
+  toolControlFreeMaxMB: 5,
+  toolControlPlusMaxMB: 200,
+  toolControlGlobalWatermark: true,
+  toolControlWatermarkText: "Processed by PDFTools",
+  toolControlDisabledTools: [],
 };
 
 const STORAGE_KEY = "pdf-tools-admin-settings";
@@ -85,10 +96,23 @@ function hexToOklchApprox(hex: string): string {
   return `${L.toFixed(4)} ${C.toFixed(4)} ${H.toFixed(2)}`;
 }
 
+/** Safely call saveAdminSettingsJson on the actor if the method exists */
+function trySaveToBackend(actor: unknown, json: string): void {
+  if (!actor) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actorAny = actor as any;
+  if (typeof actorAny.saveAdminSettingsJson !== "function") return;
+  // Fire-and-forget — silently ignore errors (user may not be admin)
+  actorAny.saveAdminSettingsJson(json).catch(() => {
+    // Intentionally swallowed
+  });
+}
+
 interface AdminSettingsContextValue {
   settings: AdminSettings;
   updateSettings: (partial: Partial<AdminSettings>) => void;
   resetSettings: () => void;
+  isLoading: boolean;
 }
 
 const AdminSettingsContext = createContext<AdminSettingsContextValue | null>(
@@ -100,11 +124,23 @@ export function AdminSettingsProvider({
 }: {
   children: React.ReactNode;
 }) {
+  const { actor, isFetching } = useActor();
+  const [isLoading, setIsLoading] = useState(true);
+
   const [settings, setSettings] = useState<AdminSettings>(() => {
+    // Fast initial render from localStorage cache
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+        const parsed = JSON.parse(stored);
+        // Strip old caffeine.ai attribution if present
+        if (
+          typeof parsed.footerCopyright === "string" &&
+          parsed.footerCopyright.toLowerCase().includes("caffeine")
+        ) {
+          parsed.footerCopyright = "";
+        }
+        return { ...DEFAULT_SETTINGS, ...parsed };
       }
     } catch {
       // ignore
@@ -112,14 +148,46 @@ export function AdminSettingsProvider({
     return DEFAULT_SETTINGS;
   });
 
-  // Persist to localStorage whenever settings change
+  // Load settings from backend when actor becomes available
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    } catch {
-      // ignore
-    }
-  }, [settings]);
+    if (!actor || isFetching) return;
+
+    const fetchSettings = async () => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const actorAny = actor as any;
+        // Guard: method may not exist if IDL is stale
+        if (typeof actorAny.getAdminSettingsJson !== "function") {
+          return;
+        }
+        const json = await actorAny.getAdminSettingsJson();
+        if (json && json !== "{}") {
+          const parsed = JSON.parse(json);
+          // Strip old caffeine.ai attribution if present
+          if (
+            typeof parsed.footerCopyright === "string" &&
+            parsed.footerCopyright.toLowerCase().includes("caffeine")
+          ) {
+            parsed.footerCopyright = "";
+          }
+          const merged = { ...DEFAULT_SETTINGS, ...parsed };
+          setSettings(merged);
+          // Update localStorage cache with server data
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+          } catch {
+            // ignore
+          }
+        }
+      } catch {
+        // Backend fetch failed — silently fall back to localStorage/defaults
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, [actor, isFetching]);
 
   // Apply dark mode class on <html>
   useEffect(() => {
@@ -143,17 +211,60 @@ export function AdminSettingsProvider({
     }
   }, [settings.themeColor]);
 
-  const updateSettings = useCallback((partial: Partial<AdminSettings>) => {
-    setSettings((prev) => ({ ...prev, ...partial }));
-  }, []);
+  const updateSettings = useCallback(
+    (partial: Partial<AdminSettings>) => {
+      // Compute next settings synchronously so we have the value for the
+      // backend call without relying on async state reads.
+      let newSettings: AdminSettings = DEFAULT_SETTINGS;
+
+      setSettings((prev) => {
+        newSettings = { ...prev, ...partial };
+
+        // Update localStorage cache immediately inside the updater so the
+        // cache is always in sync before the re-render.
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+        } catch {
+          // ignore
+        }
+
+        return newSettings;
+      });
+
+      // Persist to backend OUTSIDE the state updater so any errors are
+      // properly caught and never bubble up through React's error boundary.
+      if (actor && !isFetching) {
+        // Use setTimeout(0) to ensure the state update has been committed
+        // and localStorage holds the latest value.
+        setTimeout(() => {
+          const latestJson =
+            localStorage.getItem(STORAGE_KEY) || JSON.stringify(newSettings);
+          trySaveToBackend(actor, latestJson);
+        }, 0);
+      }
+    },
+    [actor, isFetching],
+  );
 
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
-  }, []);
+
+    // Clear localStorage cache
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+
+    // Reset on backend (fire-and-forget; safe guard inside trySaveToBackend)
+    if (actor && !isFetching) {
+      trySaveToBackend(actor, "{}");
+    }
+  }, [actor, isFetching]);
 
   const value = useMemo(
-    () => ({ settings, updateSettings, resetSettings }),
-    [settings, updateSettings, resetSettings],
+    () => ({ settings, updateSettings, resetSettings, isLoading }),
+    [settings, updateSettings, resetSettings, isLoading],
   );
 
   return (

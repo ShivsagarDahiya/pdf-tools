@@ -51,6 +51,20 @@ actor {
   // Map from principal to user profiles
   let userProfiles = Map.empty<Principal, UserProfile>();
 
+  // ── Global Admin Settings (stored as JSON text) ───────────────────────────
+  stable var adminSettingsJson : Text = "{}";
+
+  public query func getAdminSettingsJson() : async Text {
+    adminSettingsJson;
+  };
+
+  public shared ({ caller }) func saveAdminSettingsJson(json : Text) : async () {
+    if (not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only admins can save admin settings");
+    };
+    adminSettingsJson := json;
+  };
+
   // Tool stats functions
   public shared ({ caller }) func incrementToolUsage(toolName : Text) : async Nat {
     let count = switch (toolUsage.get(toolName)) {
