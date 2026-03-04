@@ -1037,77 +1037,51 @@ const CATEGORIES: Category[] = [
       {
         name: "Advanced PDF Editor",
         path: "/edit-advanced",
-        description:
-          "Canva-like visual editor — drag & drop text, shapes, signatures",
+        description: "Canva-style visual editing with drag & drop",
         svgIcon: (
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <title>Advanced PDF Editor</title>
-            <defs>
-              <linearGradient
-                id="adv-grad"
-                x1="0"
-                y1="0"
-                x2="20"
-                y2="20"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop offset="0%" stopColor="#6366F1" />
-                <stop offset="100%" stopColor="#3B82F6" />
-              </linearGradient>
-            </defs>
             <rect
               x="2"
               y="2"
-              width="11"
-              height="14"
-              rx="1.5"
-              fill="url(#adv-grad)"
-              opacity="0.18"
-            />
-            <rect
-              x="2"
-              y="2"
-              width="11"
-              height="14"
-              rx="1.5"
-              stroke="url(#adv-grad)"
+              width="16"
+              height="16"
+              rx="2"
+              fill="#7C3AED"
+              opacity="0.15"
+              stroke="#7C3AED"
               strokeWidth="1.4"
             />
-            <path
-              d="M4.5 7h6M4.5 10h4"
-              stroke="#6366F1"
+            <rect
+              x="5"
+              y="5"
+              width="10"
+              height="7"
+              rx="1"
+              fill="#7C3AED"
+              opacity="0.2"
+              stroke="#7C3AED"
               strokeWidth="1"
+            />
+            <path
+              d="M5 14h3M9 14h3M13 14h2"
+              stroke="#7C3AED"
+              strokeWidth="1.2"
               strokeLinecap="round"
               opacity="0.6"
             />
-            <circle cx="15" cy="14" r="3.5" fill="#3B82F6" opacity="0.15" />
-            <circle
-              cx="15"
-              cy="14"
-              r="3.5"
-              stroke="#3B82F6"
-              strokeWidth="1.3"
-            />
+            <circle cx="14" cy="6" r="3" fill="#7C3AED" opacity="0.9" />
             <path
-              d="M13.8 14.9l.8.8 1.8-1.8"
-              stroke="#3B82F6"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M11 6.5l1-3 5.5 5.5-3 1-3.5-3.5z"
-              fill="#6366F1"
-              opacity="0.3"
-              stroke="#6366F1"
+              d="M13 6l0.7 0.7L15.5 5"
+              stroke="white"
               strokeWidth="1.1"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
           </svg>
         ),
-        color: "#6366F1",
-        bgColor: "#EEF2FF",
+        color: "#7C3AED",
+        bgColor: "#F3EEFF",
       },
       {
         name: "Edit PDF",

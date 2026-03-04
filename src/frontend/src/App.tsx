@@ -17,7 +17,6 @@ import { AISummarizePDF } from "@/pages/AISummarizePDF";
 import { AITableExtractor } from "@/pages/AITableExtractor";
 import { AboutPage } from "@/pages/AboutPage";
 import { AdminPage } from "@/pages/AdminPage";
-// Utility Tools
 import { AdvancedPDFEditor } from "@/pages/AdvancedPDFEditor";
 import { AskPDF } from "@/pages/AskPDF";
 import { ComparePDF } from "@/pages/ComparePDF";
@@ -83,6 +82,7 @@ import { UnlockPDF } from "@/pages/UnlockPDF";
 import { UpgradePage } from "@/pages/UpgradePage";
 import { UserDashboard } from "@/pages/UserDashboard";
 import { WatermarkPDF } from "@/pages/WatermarkPDF";
+// Utility Tools
 import { WordCounter } from "@/pages/WordCounter";
 import { WordToPDF } from "@/pages/WordToPDF";
 import { WorkflowsPage } from "@/pages/WorkflowsPage";
@@ -287,6 +287,11 @@ const editPdfRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/edit",
   component: EditPDF,
+});
+const advancedEditPdfRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/edit-advanced",
+  component: AdvancedPDFEditor,
 });
 const cropPdfRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -529,11 +534,6 @@ const wordCounterRoute = createRoute({
   path: "/word-counter",
   component: WordCounter,
 });
-const editAdvancedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/edit-advanced",
-  component: AdvancedPDFEditor,
-});
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
@@ -565,6 +565,7 @@ const routeTree = rootRoute.addChildren([
   pdfToExcelRoute,
   pdfToPdfaRoute,
   editPdfRoute,
+  advancedEditPdfRoute,
   cropPdfRoute,
   signPdfRoute,
   redactPdfRoute,
@@ -617,7 +618,6 @@ const routeTree = rootRoute.addChildren([
   rtfToPdfRoute,
   // Utility
   wordCounterRoute,
-  editAdvancedRoute,
 ]);
 
 const router = createRouter({ routeTree });
