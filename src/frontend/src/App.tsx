@@ -6,6 +6,7 @@ import { MobileCameraScanner } from "@/components/MobileCameraScanner";
 import { MobileSidebar } from "@/components/MobileSidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { AdminSettingsProvider } from "@/contexts/AdminSettingsContext";
+import { MobileThemeProvider } from "@/contexts/MobileThemeContext";
 import { PlatformRoleProvider } from "@/contexts/PlatformRoleContext";
 import { useRoleRedirect } from "@/hooks/useRoleRedirect";
 // AI Tools
@@ -137,11 +138,13 @@ function RootLayoutInner() {
 
 function RootLayout() {
   return (
-    <AdminSettingsProvider>
-      <PlatformRoleProvider>
-        <RootLayoutInner />
-      </PlatformRoleProvider>
-    </AdminSettingsProvider>
+    <MobileThemeProvider>
+      <AdminSettingsProvider>
+        <PlatformRoleProvider>
+          <RootLayoutInner />
+        </PlatformRoleProvider>
+      </AdminSettingsProvider>
+    </MobileThemeProvider>
   );
 }
 

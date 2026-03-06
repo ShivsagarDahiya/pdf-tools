@@ -3,10 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ACCENT_PRESETS, useMobileTheme } from "@/contexts/MobileThemeContext";
 import { useInternetIdentity } from "@/hooks/useInternetIdentity";
 import { useGetProfile, useUpdateProfile } from "@/hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Check, Loader2, LogIn, Shield, User } from "lucide-react";
+import {
+  Camera,
+  Check,
+  Loader2,
+  LogIn,
+  Moon,
+  Shield,
+  Sun,
+  User,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -14,6 +24,7 @@ import { toast } from "sonner";
 export function ProfilePage() {
   const { identity, login, isLoggingIn } = useInternetIdentity();
   const principalStr = identity?.getPrincipal().toString();
+  const { theme, setTheme, accentColor, setAccentColor } = useMobileTheme();
 
   const queryClient = useQueryClient();
   const { data: profile, isLoading: isProfileLoading } = useGetProfile();
@@ -145,6 +156,151 @@ export function ProfilePage() {
           </div>
         </motion.div>
 
+        {/* ── Mobile App Settings (mobile only) ─────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.05 }}
+          className="md:hidden mb-6"
+          data-ocid="profile.panel"
+        >
+          <Card className="border-border shadow-card overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-ui font-semibold flex items-center gap-2">
+                <span
+                  className="w-5 h-5 rounded-md flex items-center justify-center"
+                  style={{ background: `${accentColor}25`, color: accentColor }}
+                >
+                  {theme === "dark" ? (
+                    <Moon className="w-3 h-3" />
+                  ) : (
+                    <Sun className="w-3 h-3" />
+                  )}
+                </span>
+                App Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Dark/Light toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Theme</p>
+                  <p className="text-xs text-muted-foreground">
+                    {theme === "dark"
+                      ? "Dark mode active"
+                      : "Light mode active"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="relative w-[72px] h-9 rounded-full flex items-center p-1 transition-all duration-300"
+                  style={{
+                    background:
+                      theme === "dark"
+                        ? "linear-gradient(135deg, #1a1040, #0d0830)"
+                        : "linear-gradient(135deg, #e0e7ff, #c7d2fe)",
+                    border:
+                      theme === "dark"
+                        ? "1px solid rgba(139,92,246,0.3)"
+                        : "1px solid rgba(99,102,241,0.3)",
+                  }}
+                  aria-label="Toggle theme"
+                  data-ocid="profile.toggle"
+                >
+                  {/* Icons row */}
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2">
+                    <Moon
+                      className="w-3.5 h-3.5"
+                      style={{
+                        color:
+                          theme === "dark" ? "#A78BFA" : "rgba(99,102,241,0.3)",
+                      }}
+                    />
+                  </span>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Sun
+                      className="w-3.5 h-3.5"
+                      style={{
+                        color:
+                          theme === "light" ? "#D97706" : "rgba(217,119,6,0.3)",
+                      }}
+                    />
+                  </span>
+                  {/* Knob */}
+                  <motion.div
+                    layout
+                    className="w-7 h-7 rounded-full flex items-center justify-center"
+                    style={{
+                      background:
+                        theme === "dark"
+                          ? "linear-gradient(135deg, #7C3AED, #6366F1)"
+                          : "linear-gradient(135deg, #F59E0B, #FBBF24)",
+                      marginLeft: theme === "dark" ? "0" : "auto",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 32 }}
+                  >
+                    {theme === "dark" ? (
+                      <Moon className="w-3 h-3 text-white" />
+                    ) : (
+                      <Sun className="w-3 h-3 text-white" />
+                    )}
+                  </motion.div>
+                </button>
+              </div>
+
+              {/* Accent color picker */}
+              <div>
+                <p className="text-sm font-medium text-foreground mb-2">
+                  Accent Color
+                </p>
+                <div className="flex items-center gap-3">
+                  {ACCENT_PRESETS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setAccentColor(color)}
+                      aria-label={`Set accent to ${color}`}
+                      className="transition-all duration-200 active:scale-90"
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        background: color,
+                        border:
+                          accentColor === color
+                            ? "3px solid white"
+                            : "3px solid transparent",
+                        boxShadow:
+                          accentColor === color
+                            ? `0 0 0 2px ${color}, 0 4px 12px ${color}60`
+                            : `0 2px 8px ${color}40`,
+                        outline: "none",
+                      }}
+                      data-ocid="profile.button"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Reset button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTheme("dark");
+                  setAccentColor("#FF6B00");
+                }}
+                className="text-xs font-medium transition-colors"
+                style={{ color: "rgba(100,116,139,0.7)" }}
+                data-ocid="profile.secondary_button"
+              >
+                ↺ Reset to defaults
+              </button>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -166,28 +322,49 @@ export function ProfilePage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-6">
+                  {/* Avatar with indigo→violet gradient ring */}
                   <button
                     type="button"
                     onClick={handleAvatarClick}
-                    className="relative w-24 h-24 rounded-full overflow-hidden group cursor-pointer flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    className="relative flex-shrink-0 focus-visible:outline-none group"
                     aria-label="Change profile picture"
                   >
-                    {previewUrl ? (
-                      <img
-                        src={previewUrl}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-primary font-display">
-                          {initials}
-                        </span>
+                    {/* Gradient ring */}
+                    <div
+                      className="w-28 h-28 rounded-full p-[3px] flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7, #7c3aed)",
+                        boxShadow:
+                          "0 0 20px rgba(139,92,246,0.45), 0 0 40px rgba(139,92,246,0.2)",
+                      }}
+                    >
+                      {/* Inner ring gap */}
+                      <div className="w-full h-full rounded-full p-[2px] bg-card">
+                        <div className="w-full h-full rounded-full overflow-hidden relative">
+                          {previewUrl ? (
+                            <img
+                              src={previewUrl}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-500/20 to-violet-500/20 flex items-center justify-center">
+                              <span className="text-2xl font-bold font-display bg-gradient-to-br from-indigo-500 to-violet-600 bg-clip-text text-transparent">
+                                {initials}
+                              </span>
+                            </div>
+                          )}
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <Camera className="w-6 h-6 text-white" />
+                          </div>
+                        </div>
                       </div>
-                    )}
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Camera className="w-6 h-6 text-white" />
+                    </div>
+                    {/* Camera badge */}
+                    <div className="absolute bottom-1 right-1 w-7 h-7 rounded-full bg-indigo-500 border-2 border-card flex items-center justify-center shadow-md">
+                      <Camera className="w-3.5 h-3.5 text-white" />
                     </div>
                   </button>
 
